@@ -11,6 +11,10 @@ import os
 import colorama
 from dotenv import load_dotenv
 import pprint
+from requests.exceptions import ConnectionError
+import time
+import random
+
 
 def progress_bar(progress, total, color=colorama.Fore.GREEN):
     '''Progress bar for running time display'''
@@ -69,6 +73,9 @@ def get_artist_album(artist_album, artist=False, album=False):
 
 def wiki_search_bands(album_list):
     '''queries wikipedia for band details'''
+    
+    back_off_throttle = 15
+
     band_related_articles = []
     
     print('Wiki Searching Band Details from 2024 List...')
@@ -81,7 +88,18 @@ def wiki_search_bands(album_list):
         band = get_artist_album(artist_album=band, artist=True)
         band = band.strip()
         # query for album information
-        articles = WikipediaLoader(query=band, load_max_docs=3).load()
+        retries = 3
+        for attempt in range(retries):
+            try:
+                articles = WikipediaLoader(query=band, load_max_docs=3).load()
+            except ConnectionError as e:
+                if attempt < retries:
+                    time.sleep(back_off_throttle * (2 ** attempt))
+                else:
+                    # long nap.. :(
+                    # wait a random time between 100-600 seconds
+                    time.sleep(100 * random.randint(1,6))
+
         searched_bands += 1
         for article in articles:
             article_title = article.metadata['title']
@@ -104,6 +122,9 @@ def wiki_search_bands(album_list):
 
 def wiki_search_albums(album_list):
     '''queries wikipedia for album details and band details'''
+    
+    back_off_throttle = 15
+
     album_related_articles = []
     print('Wiki Searching Album Details from 2024 List...')
     searched_albums = 0
@@ -115,7 +136,19 @@ def wiki_search_albums(album_list):
         album = get_artist_album(artist_album=album,album=True)
         album = album.strip()
         # query for album information
-        articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
+        retries = 3
+        for attempt in range(retries):
+            try: 
+                articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
+            except ConnectionError as e:
+                if attempt < retries:
+                    print(f"Connection error on attempt: {attempt + 1}: {e}")
+                    time.sleep(back_off_throttle * (2 ** attempt))
+                else:
+                    # long nap.. :(
+                    # wait a random time between 100-600 seconds
+                    time.sleep(100 * random.randint(1,6))
+        
         searched_albums += 1
         for article in articles:
             article_title = article.metadata['title']
@@ -192,10 +225,10 @@ def main():
     found_albums = extract_artists(page_content=page_content)
     
     # get articles about the artists
-    band_related_articles = wiki_search_bands(album_list=found_albums[:150])
+    band_related_articles = wiki_search_bands(album_list=found_albums)
 
     # get articles about the album
-    album_related_articles = wiki_search_albums(album_list=found_albums[:150])
+    album_related_articles = wiki_search_albums(album_list=found_albums)
 
     documents = []
     # supply the html page content to be embedded
