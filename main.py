@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import WikipediaLoader
 from langchain.prompts import PromptTemplate
 import re
@@ -14,6 +15,7 @@ import pprint
 from requests.exceptions import ConnectionError
 import time
 import random
+import uuid
 
 
 def progress_bar(progress, total, color=colorama.Fore.GREEN):
@@ -38,6 +40,38 @@ def chunk_best_of_24_list(page_content):
     album_data = splitter.split_documents(page_content)
 
     return album_data
+
+def load_kexp_album_documents():
+    documents = []
+
+    loader = BSHTMLLoader("./Vote for KEXP's Best of 2024.html")
+    kexp_best_of_24 = loader.load()
+
+    page_content = kexp_best_of_24[0].page_content
+
+    # extract the artists and their albums
+    found_albums = extract_artists(page_content=page_content)
+    
+    # get articles about the artists
+    band_related_articles = wiki_search_bands(album_list=found_albums)
+
+    # get articles about the album
+    album_related_articles = wiki_search_albums(album_list=found_albums)
+
+    # supply the html page content to be embedded
+    album_data = chunk_best_of_24_list(page_content=kexp_best_of_24)
+    documents.extend(album_data)
+
+    # supply the band information to be embedded
+    for band_article in band_related_articles:
+        documents.extend(band_article)
+
+    # # supply the album information to be embedded
+    for album_article in album_related_articles:
+        documents.extend(album_article)
+
+    return documents
+
 
 # determine artists to wiki walk:
 def extract_artists(page_content):
@@ -81,6 +115,11 @@ def wiki_search_bands(album_list):
     print('Wiki Searching Band Details from 2024 List...')
     searched_bands = 0
     total_albums = len(album_list)-1
+
+    # if "albums.txt" not in os.listdir():
+    #     # open the file and create a running list of parsed albums
+    #     with open("albums.txt","w") as albums_file:
+            
 
     for band in album_list:
         # {something-artist} - {something-album}
@@ -212,39 +251,6 @@ def main():
         timeout=30
     )
 
-    # Data Sanitization:
-    #============================
-
-    loader = BSHTMLLoader("./Vote for KEXP's Best of 2024.html")
-    kexp_best_of_24 = loader.load()
-
-    page_content = kexp_best_of_24[0].page_content
-
-
-    # extract the artists and their albums
-    found_albums = extract_artists(page_content=page_content)
-    
-    # get articles about the artists
-    band_related_articles = wiki_search_bands(album_list=found_albums)
-
-    # get articles about the album
-    album_related_articles = wiki_search_albums(album_list=found_albums)
-
-    documents = []
-    # supply the html page content to be embedded
-    album_data = chunk_best_of_24_list(page_content=kexp_best_of_24)
-    documents.extend(album_data)
-
-    # supply the band information to be embedded
-    for band_article in band_related_articles:
-        documents.extend(band_article)
-
-    # # supply the album information to be embedded
-    for album_article in album_related_articles:
-        documents.extend(album_article)
-
-    # Chroma Vector DB
-    # ======================
 
     # mistral embedding model
     embedding_model = OpenAIEmbeddings(
@@ -252,14 +258,28 @@ def main():
                             model="text-embedding-3-small" 
                         )
     
+    # Chroma Vector DB
+    # ======================
 
-    # supply the chunked documents and the embedding model chroma db
-    vector_store = Chroma.from_documents(     
-                        documents=documents,      
-                        embedding=embedding_model,
-                        collection_name="KEXP-24-Embeddings", 
-                        persist_directory='db',
-                        )
+    if "chroma_db" not in os.listdir():
+        documents = load_kexp_album_documents()
+        # supply the chunked documents and the embedding model chroma db
+        vector_store = Chroma.from_documents(     
+                            documents=documents,   
+                            ids=[str(uuid.uuid4()) for _ in documents],   
+                            embedding=embedding_model,
+                            collection_name="KEXP-24-Embeddings", 
+                            persist_directory='chroma_db',
+                            )
+        vector_store.persist()
+    else:
+        # load the existing vector db with lang_chain.Chroma
+        vector_store = Chroma(
+            embedding_function=embedding_model,
+            persist_directory='chroma_db',
+            collection_name="KEXP-24-Embeddings"
+        )
+
     
     
     # # set up chroma to be the retriever for related documents based on the embedding
@@ -293,13 +313,7 @@ def main():
 
 
     pprint.pprint(
-        qa_with_source("Are there any new Khurangbin Albums in 2024?")
+        qa_with_source("What is 2nd Grade ")
     )
-
-
-
-
-
-
 
 main()
