@@ -113,51 +113,124 @@ def wiki_search_bands(album_list):
     band_related_articles = []
     
     print('Wiki Searching Band Details from 2024 List...')
-    searched_bands = 0
-    total_albums = len(album_list)-1
 
-    # if "albums.txt" not in os.listdir():
-    #     # open the file and create a running list of parsed albums
-    #     with open("albums.txt","w") as albums_file:
-            
+    if "bands.txt" not in os.listdir():
+        searched_bands = 0
+        total_albums = len(album_list)-1
+        # open the file and create a running list of parsed albums
+        with open("bands.txt","a") as bands_file:
+            for band in album_list:
+                # {something-artist} - {something-album}
+                progress_bar(progress=searched_bands, total=total_albums)
+                band = get_artist_album(artist_album=band, artist=True)
+                band = band.strip()
+                # query for album information
+                retries = 3
+                for attempt in range(retries):
+                    try:
+                        articles = WikipediaLoader(query=band, load_max_docs=3).load()
+                    except ConnectionError as e:
+                        if attempt < retries:
+                            print("ConnectionError: pulling back on request time")
+                            time.sleep(back_off_throttle * (2 ** attempt))
+                        else:
+                            # long nap.. :(
+                            # wait a random time between 100-600 seconds
+                            time.sleep(100 * random.randint(1,6))
 
-    for band in album_list:
-        # {something-artist} - {something-album}
-        progress_bar(progress=searched_bands, total=total_albums)
-        band = get_artist_album(artist_album=band, artist=True)
-        band = band.strip()
-        # query for album information
-        retries = 3
-        for attempt in range(retries):
-            try:
-                articles = WikipediaLoader(query=band, load_max_docs=3).load()
-            except ConnectionError as e:
-                if attempt < retries:
-                    time.sleep(back_off_throttle * (2 ** attempt))
-                else:
-                    # long nap.. :(
-                    # wait a random time between 100-600 seconds
-                    time.sleep(100 * random.randint(1,6))
+                searched_bands += 1
+                for article in articles:
+                    article_title = article.metadata['title']
 
-        searched_bands += 1
-        for article in articles:
-            article_title = article.metadata['title']
+                    if article_title in band:
+                        article = chunk_wiki_content(article=article)
+                        band_related_articles.append(article)
+                        bands_file.write(f'{band} \n')
+                    else:
+                        # case where it's an ambiguous name
+                        band_regex = r'\(band\)'
+                        # search articles for band_regex
+                        if re.search(band_regex, article_title):
+                            article = chunk_wiki_content(article=article)
+                            band_related_articles.append(article)
+                            bands_file.write(f'{band}\n')
+                        else:
+                            continue
+            print(colorama.Fore.RESET)
+            print('Finished Wiki Searching Bands...')
+            # close the file.
+            bands_file.close()
+            return band_related_articles
+    else:
+        # need to get the latest album found and skip the line 
+        with open("bands.txt","r") as bands:
+            read_band_list = bands.readlines()
+            bands.close()
 
-            if article_title in band:
-                article = chunk_wiki_content(article=article)
-                band_related_articles.append(article)
-            else:
-                # case where it's an ambiguous name
-                band_regex = r'\(band\)'
-                # search articles for band_regex
-                if re.search(band_regex, article_title):
-                    article = chunk_wiki_content(article=article)
-                    band_related_articles.append(article)
-                else:
+        # reopen the file to append more bands.
+        with open("bands.txt", "a") as bands_file:
+            # get the last artist searched.
+            last_band_searched = get_artist_album(artist_album=read_band_list[-1], artist=True)
+            last_band = last_band_searched.strip()
+
+            band_restart_idx = 0
+            for idx, band in enumerate(album_list):
+                # strips for band/artist
+                band = get_artist_album(artist_album=band, artist=True)
+                band = band.strip()
+
+                if band != last_band:
                     continue
-    print(colorama.Fore.RESET)
-    print('Finished Wiki Searching Bands...')
-    return band_related_articles
+                else:
+                    # found your starting point.
+                    band_restart_idx = idx
+                    break
+            
+            remaining_bands = album_list[band_restart_idx]
+            # start where you left off.
+            for band in remaining_bands:
+                # {something-artist} - {something-album}
+                progress_bar(progress=searched_bands, total=total_albums)
+                band = get_artist_album(artist_album=band, artist=True)
+                band = band.strip()
+                # query for album information
+                retries = 3
+                for attempt in range(retries):
+                    try:
+                        articles = WikipediaLoader(query=band, load_max_docs=3).load()
+                    except ConnectionError as e:
+                        if attempt < retries:
+                            print("ConnectionError: pulling back on request time")
+                            time.sleep(back_off_throttle * (2 ** attempt))
+                        else:
+                            # long nap.. :(
+                            # wait a random time between 100-600 seconds
+                            time.sleep(100 * random.randint(1,6))
+
+                searched_bands += 1
+                for article in articles:
+                    article_title = article.metadata['title']
+
+                    if article_title in band:
+                        article = chunk_wiki_content(article=article)
+                        band_related_articles.append(article)
+                        bands_file.write(f'{band} \n')
+                    else:
+                        # case where it's an ambiguous name
+                        band_regex = r'\(band\)'
+                        # search articles for band_regex
+                        if re.search(band_regex, article_title):
+                            article = chunk_wiki_content(article=article)
+                            band_related_articles.append(article)
+                            bands_file.write(f'{band}\n')
+                        else:
+                            continue
+            print(colorama.Fore.RESET)
+            print('Finished Wiki Searching Bands...')
+            # close the file.
+            bands_file.close()
+            return band_related_articles
+
 
 def wiki_search_albums(album_list):
     '''queries wikipedia for album details and band details'''
@@ -166,47 +239,129 @@ def wiki_search_albums(album_list):
 
     album_related_articles = []
     print('Wiki Searching Album Details from 2024 List...')
-    searched_albums = 0
-    total_albums = len(album_list)-1
+    if "albums.txt" not in os.listdir():
+        searched_albums = 0
+        total_albums = len(album_list)-1
+        # create a albums file list for a running tally
+        with open("albums.txt","a") as albums_file:
+            for album in album_list:
+                # remove white space
+                progress_bar(progress=searched_albums, total=total_albums)
+                album = get_artist_album(artist_album=album,album=True)
+                album = album.strip()
+                # query for album information
+                retries = 3
+                for attempt in range(retries):
+                    try: 
+                        articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
+                    except ConnectionError as e:
+                        if attempt < retries:
+                            print(f"Connection error on attempt: {attempt + 1}: {e}")
+                            time.sleep(back_off_throttle * (2 ** attempt))
+                        else:
+                            # long nap.. :(
+                            # wait a random time between 100-600 seconds
+                            time.sleep(100 * random.randint(1,6))
+                
+                searched_albums += 1
+                for article in articles:
+                    article_title = article.metadata['title']
+                    # search articles for band_regex
+                    if article_title in album:
+                        article = chunk_wiki_content(article=article)
+                        album_related_articles.append(article)
+                        # add the band to the list
+                        albums_file.write(f'{album}\n')
+                    else:
+                        # case where it's an ambiguous name
+                        album_regex = r'\(album\)'
+                        # search articles for band_regex
+                        if re.search(album_regex, article_title):
+                            article = chunk_wiki_content(article=article)
+                            album_related_articles.append(article)
+                            # add the band to the list
+                            albums_file.write(f'{album}\n')
+                        else:
+                            continue
 
-    for album in album_list:
-        # remove white space
-        progress_bar(progress=searched_albums, total=total_albums)
-        album = get_artist_album(artist_album=album,album=True)
-        album = album.strip()
-        # query for album information
-        retries = 3
-        for attempt in range(retries):
-            try: 
-                articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
-            except ConnectionError as e:
-                if attempt < retries:
-                    print(f"Connection error on attempt: {attempt + 1}: {e}")
-                    time.sleep(back_off_throttle * (2 ** attempt))
-                else:
-                    # long nap.. :(
-                    # wait a random time between 100-600 seconds
-                    time.sleep(100 * random.randint(1,6))
-        
-        searched_albums += 1
-        for article in articles:
-            article_title = article.metadata['title']
-            # search articles for band_regex
-            if article_title in album:
-                article = chunk_wiki_content(article=article)
-                album_related_articles.append(article)
-            else:
-                # case where it's an ambiguous name
-                album_regex = r'\(album\)'
-                # search articles for band_regex
-                if re.search(album_regex, article_title):
-                    article = chunk_wiki_content(article=article)
-                    album_related_articles.append(article)
-                else:
+            albums_file.close()
+
+            print(colorama.Fore.RESET)
+            print('Finished Chunking ALbums...')
+            return album_related_articles
+    else:
+        searched_albums = 0
+        total_albums = len(album_list)-1
+        # assume the file exists and check the list
+        with open("albums.txt","r") as albums:
+            read_albums_list = albums.readlines()
+            albums.close()
+
+        # reopen file to add to it.
+        with open("albums.txt", "a") as albums_file:
+            # get the last read band
+            last_album_searched = get_artist_album(artist_album=read_albums_list[-1], album=True)
+            last_album = last_album_searched.strip()
+
+            album_restart_indx = 0
+            for idx, album in enumerate(album_list):
+                album = get_artist_album(artist_album=album, album=True)
+                # remove wite space
+                album = album.strip()
+
+                if album != last_album:
                     continue
-    print(colorama.Fore.RESET)
-    print('Finished Chunking ALbums...')
-    return album_related_articles
+                else:
+                    album_restart_indx = idx
+                    searched_albums = idx
+                    break
+
+            remaining_albums = album_list[album_restart_indx]
+            # iterate through the remaining items
+            for album in remaining_albums:
+                # remove white space
+                progress_bar(progress=searched_albums, total=total_albums)
+                album = get_artist_album(artist_album=album,album=True)
+                album = album.strip()
+                # query for album information
+                retries = 3
+                for attempt in range(retries):
+                    try: 
+                        articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
+                    except ConnectionError as e:
+                        if attempt < retries:
+                            print(f"Connection error on attempt: {attempt + 1}: {e}")
+                            time.sleep(back_off_throttle * (2 ** attempt))
+                        else:
+                            # long nap.. :(
+                            # wait a random time between 100-600 seconds
+                            time.sleep(100 * random.randint(1,6))
+                
+                searched_albums += 1
+                for article in articles:
+                    article_title = article.metadata['title']
+                    # search articles for band_regex
+                    if article_title in album:
+                        article = chunk_wiki_content(article=article)
+                        album_related_articles.append(article)
+                        # add the band to the list
+                        albums_file.write(album)
+                    else:
+                        # case where it's an ambiguous name
+                        album_regex = r'\(album\)'
+                        # search articles for band_regex
+                        if re.search(album_regex, article_title):
+                            article = chunk_wiki_content(article=article)
+                            album_related_articles.append(article)
+                            # add the band to the list
+                            albums_file.write(album)
+                        else:
+                            continue
+
+        print(colorama.Fore.RESET)
+        print('Finished Chunking ALbums...')
+        return album_related_articles
+
 
 def chunk_wiki_content(article):
     '''takes article text as input and chunks the results for embedding'''
@@ -271,7 +426,7 @@ def main():
                             collection_name="KEXP-24-Embeddings", 
                             persist_directory='chroma_db',
                             )
-        vector_store.persist()
+    
     else:
         # load the existing vector db with lang_chain.Chroma
         vector_store = Chroma(
@@ -290,9 +445,9 @@ def main():
 
 
     template = """
-            Use the following pieces of context to answer the question at the end, for the user.
-            If you unfortunately don't know, it's not a big deal, just say that you don't know
-            mainly mention that Wikipedia might not have any information about that band, and suggest the user make contributions about the artist.
+            Use the following pieces of context to answer the question about the musical groups, answer questions about albums and releases.
+            include dates, and genres as well as record labels if the information is available to best answer the questions.
+        
             
             {context}
 
@@ -313,7 +468,7 @@ def main():
 
 
     pprint.pprint(
-        qa_with_source("What is 2nd Grade ")
+        qa_with_source("")
     )
 
 main()
