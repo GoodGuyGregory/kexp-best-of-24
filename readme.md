@@ -15,3 +15,4 @@ for the year of 2024, I have been busier than I have been in the past two years.
 [OpenAI]()
 [LangChain]()
 [Chroma DB](https://docs.trychroma.com/getting-started)
+[Tommy Codes Chroma DB Benefits and Demonstration](https://www.youtube.com/watch?v=QSW2L8dkaZk&t=184s)
