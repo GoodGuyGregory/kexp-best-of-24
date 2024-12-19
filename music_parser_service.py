@@ -47,28 +47,64 @@ class MusicParserService():
 
         return album_data
 
-    def load_kexp_album_documents(self):
-        documents = []
-
+    def load_BSHTML(self):
         loader = BSHTMLLoader("./Vote for KEXP's Best of 2024.html")
         kexp_best_of_24 = loader.load()
+
+        return kexp_best_of_24
+
+    def extract_albums_from_kexp(self):
+        kexp_best_of_24 = self.load_BSHTML()
 
         page_content = kexp_best_of_24[0].page_content
 
         # extract the artists and their albums
         found_albums = self.extract_artists(page_content=page_content)
-        
-        #limit the alums within the wiki search
-        found_albums = found_albums
 
+        if "kexp_albums_24.txt" not in os.listdir():
+            with open("kexp_albums_24.txt", "a") as kexp_albums:
+                # write the content of the found_albums to a file.
+                for album in found_albums:
+                    kexp_albums.write(f'{album}\n')
+                print("written to kexp_albums_24.txt")
+        
+        # open a slice for scraping.
+        with open("kexp_albums_24.txt", "r") as kexp_albums:
+            # take the first slice of albums 
+            albums = kexp_albums.readlines()
+            slice_index = len(albums) // 4
+            if slice_index < 100:
+                # just take the remaining albums
+                sliced_albums = albums
+            else:
+                # slice the albums needed for scraping
+                sliced_albums = albums[:slice_index]
+
+        # remove that slice from the file.
+        with open("kexp_albums_24.txt", "w") as kexp_albums:
+            # iterate through the albums
+            for album in albums:
+                if album not in sliced_albums:
+                    kexp_albums.write(f'{album}')
+        
+        # return a quarter of the albums remaining
+        return sliced_albums
+
+    def load_kexp_album_documents(self):
+        documents = []
+
+        found_albums = self.extract_albums_from_kexp()
+        
         # get articles about the artists
         band_related_articles = self.wiki_search_bands(album_list=found_albums)
 
-        # wait like ~20 minutes
-        time.sleep(1200)
+        if self.wiki_timeout != True:
+            # get articles about the album
+            album_related_articles = self.wiki_search_albums(album_list=found_albums)
+        else:
+            print("Wiki-Timeout: await a few hours, and then run the list again.")
 
-        # get articles about the album
-        album_related_articles = self.wiki_search_albums(album_list=found_albums)
+        kexp_best_of_24 = self.load_BSHTML()
 
         # supply the html page content to be embedded
         album_data = self.chunk_best_of_24_list(page_content=kexp_best_of_24)
