@@ -238,7 +238,7 @@ class MusicParserService():
                         # found your starting point.
                         band_restart_idx = idx
                         break
-                # slice from 85:EoL
+                # slice from slice_index:EoL
                 remaining_bands = album_list[band_restart_idx:]
                 # start where you left off.
                 searched_bands = 0
@@ -357,8 +357,6 @@ class MusicParserService():
                 print('Finished Chunking ALbums...')
                 return album_related_articles
         else:
-            searched_albums = 0
-            total_albums = len(album_list)-1
             # assume the file exists and check the list
             with open("albums.txt","r") as albums:
                 read_albums_list = albums.readlines()
@@ -387,11 +385,11 @@ class MusicParserService():
                 # start where you left off.
                 searched_albums = 0
                 # collect th remaining total
-                remaining_albums = len(remaining_albums)
+                albums_left = len(remaining_albums)
                 # iterate through the remaining items
                 for remaining_album in remaining_albums:
                     # remove white space
-                    self.progress_bar(progress=searched_albums, total=total_albums)
+                    self.progress_bar(progress=searched_albums, total=albums_left)
                     album = self.get_artist_album(artist_album=remaining_album,album=True)
                     album = album.strip()
                     # query for album information

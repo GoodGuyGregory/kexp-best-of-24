@@ -32,8 +32,7 @@ def main():
         timeout=30
     )
 
-
-    # mistral embedding model
+    # openai embedding model
     embedding_model = OpenAIEmbeddings(
                             api_key=OPEN_AI_API_KEY,
                             model="text-embedding-3-small" 
