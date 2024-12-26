@@ -32,8 +32,7 @@ def main():
         timeout=30
     )
 
-
-    # mistral embedding model
+    # openai embedding model
     embedding_model = OpenAIEmbeddings(
                             api_key=OPEN_AI_API_KEY,
                             model="text-embedding-3-small" 
@@ -100,7 +99,7 @@ def main():
 
 
     pprint.pprint(
-        qa_with_source("Tell me about Beak> in 2024.")
+        qa_with_source("Tell me about King Gizzard and the Lizard Wizard in 2024.")
     )
 
 main()

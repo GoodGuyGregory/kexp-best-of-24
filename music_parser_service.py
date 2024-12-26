@@ -1,17 +1,10 @@
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter 
-from langchain_openai import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_chroma import Chroma
 from langchain_community.document_loaders import WikipediaLoader
-from langchain.prompts import PromptTemplate
 import re
 import os
 import colorama
 from dotenv import load_dotenv
-import pprint
 from requests.exceptions import ConnectionError
 from requests.exceptions import ReadTimeout
 from file_empty import FileEmpty
@@ -209,7 +202,17 @@ class MusicParserService():
                                 band_related_articles.append(article)
                                 bands_file.write(f'{band}\n')
                             else:
-                                continue
+                                # case where (singer) is in the name
+                                # case where it's an ambiguous name
+                                singer_regex = r'\(singer\)'
+                                # search articles for band_regex
+                                if re.search(singer_regex, article_title):
+                                    article = self.chunk_wiki_content(article=article)
+                                    band_related_articles.append(article)
+                                    bands_file.write(f'{band}\n')
+                                else:
+                                    continue
+                               
                 print(colorama.Fore.RESET)
                 print('Finished Wiki Searching Bands...')
                 # close the file.
@@ -240,7 +243,8 @@ class MusicParserService():
                         # found your starting point.
                         band_restart_idx = idx
                         break
-                # slice from 85:EoL
+
+                # slice from slice_index:EoL
                 remaining_bands = album_list[band_restart_idx:]
                 # start where you left off.
                 searched_bands = 0
@@ -287,7 +291,17 @@ class MusicParserService():
                                 band_related_articles.append(article)
                                 bands_file.write(f'{band}\n')
                             else:
-                                continue
+                                # case where (singer) is in the name
+                                # case where it's an ambiguous name
+                                singer_regex = r'\(singer\)'
+                                # search articles for band_regex
+                                if re.search(singer_regex, article_title):
+                                    article = self.chunk_wiki_content(article=article)
+                                    band_related_articles.append(article)
+                                    bands_file.write(f'{band}\n')
+                                else:
+                                    continue
+                        
                 print(colorama.Fore.RESET)
                 print('Finished Wiki Searching Bands...')
                 # close the file.
@@ -361,6 +375,7 @@ class MusicParserService():
         else:
             searched_albums = 0
             total_albums = len(album_list)-1
+
             # assume the file exists and check the list
             with open("albums.txt","r") as albums:
                 read_albums_list = albums.readlines()
@@ -389,11 +404,13 @@ class MusicParserService():
                 # start where you left off.
                 searched_albums = 0
                 # collect th remaining total
-                remaining_albums = len(remaining_albums)
+                
+                albums_left = len(remaining_albums)
                 # iterate through the remaining items
                 for remaining_album in remaining_albums:
                     # remove white space
-                    self.progress_bar(progress=searched_albums, total=total_albums)
+                    self.progress_bar(progress=searched_albums, total=albums_left)
+            
                     album = self.get_artist_album(artist_album=remaining_album,album=True)
                     album = album.strip()
                     # query for album information
@@ -423,7 +440,9 @@ class MusicParserService():
                             article = self.chunk_wiki_content(article=article)
                             album_related_articles.append(article)
                             # add the band to the list
-                            albums_file.write(album)
+
+                            albums_file.write(f'{album}\n')
+
                         else:
                             # case where it's an ambiguous name
                             album_regex = r'\(album\)'
@@ -432,7 +451,9 @@ class MusicParserService():
                                 article = self.chunk_wiki_content(article=article)
                                 album_related_articles.append(article)
                                 # add the band to the list
-                                albums_file.write(album)
+
+                                albums_file.write(f'{album}\n')
+
                             else:
                                 continue
 
