@@ -171,14 +171,14 @@ class MusicParserService():
                             articles = WikipediaLoader(query=band, load_max_docs=3).load()
                         except ConnectionError as e:
                             if attempt < retries:
-                                print("ConnectionError: pulling back on request time")
+                                print("ConnectionError: pulling back on request time\n")
                                 time.sleep(back_off_throttle * (2 ** attempt))
                             else:
                                 # long nap.. :(
                                 # wait a random time between 100-600 seconds
                                 time.sleep(100 * random.randint(1,6))
                         except ReadTimeout as e:
-                            print("ReadTimeout occurred returning everything captured thus far.")
+                            print("ReadTimeout occurred returning everything captured thus far.\n")
                             # return everything captured thus far
                             self.wiki_timeout = True
                             bands_file.close()
@@ -261,14 +261,14 @@ class MusicParserService():
                             articles = WikipediaLoader(query=band, load_max_docs=3).load()
                         except ConnectionError as e:
                             if attempt < retries:
-                                print("ConnectionError: pulling back on request time")
+                                print("ConnectionError: pulling back on request time\n")
                                 time.sleep(back_off_throttle * (2 ** attempt))
                             else:
                                 # long nap.. :(
                                 # wait a random time between 100-600 seconds
                                 time.sleep(100 * random.randint(1,6))
                         except ReadTimeout as e:
-                            print("ReadTimeout occurred returning everything captured thus far.")
+                            print("ReadTimeout occurred returning everything captured thus far.\n")
                             # return everything captured thus far
                             bands_file.close()
                             return band_related_articles
@@ -332,14 +332,14 @@ class MusicParserService():
                             articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
                         except ConnectionError as e:
                             if attempt < retries:
-                                print(f"Connection error on attempt: {attempt + 1}: {e}")
+                                print(f"Connection error on attempt: {attempt + 1}: {e}\n")
                                 time.sleep(back_off_throttle * (2 ** attempt))
                             else:
                                 # long nap.. :(
                                 # wait a random time between 100-600 seconds
                                 time.sleep(100 * random.randint(1,6))
                         except ReadTimeout as e:
-                            print("ReadTimeout occurred returning everything captured thus far.")
+                            print("ReadTimeout occurred returning everything captured thus far.\n")
                             self.wiki_timeout = True
                             # return everything captured thus far
                             albums_file.close()
