@@ -4,7 +4,6 @@ from langchain_community.document_loaders import WikipediaLoader
 import re
 import os
 import colorama
-from dotenv import load_dotenv
 from requests.exceptions import ConnectionError
 from requests.exceptions import ReadTimeout
 from file_empty import FileEmpty
