@@ -1,21 +1,15 @@
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter 
-from langchain_openai import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import WikipediaLoader
-from langchain.prompts import PromptTemplate
 import re
 import os
 import colorama
 from dotenv import load_dotenv
-import pprint
 from requests.exceptions import ConnectionError
 from requests.exceptions import ReadTimeout
 from file_empty import FileEmpty
 import time
 import random
-import uuid
 
 class MusicParserService():
     def __init__(self):
@@ -207,7 +201,16 @@ class MusicParserService():
                                 band_related_articles.append(article)
                                 bands_file.write(f'{band}\n')
                             else:
-                                continue
+                                # case where (singer) is in the name
+                                # case where it's an ambiguous name
+                                singer_regex = r'\(singer\)'
+                                # search articles for band_regex
+                                if re.search(singer_regex, article_title):
+                                    article = self.chunk_wiki_content(article=article)
+                                    band_related_articles.append(article)
+                                    bands_file.write(f'{band}\n')
+                                else:
+                                    continue
                 print(colorama.Fore.RESET)
                 print('Finished Wiki Searching Bands...')
                 # close the file.
@@ -285,7 +288,16 @@ class MusicParserService():
                                 band_related_articles.append(article)
                                 bands_file.write(f'{band}\n')
                             else:
-                                continue
+                                # case where (singer) is in the name
+                                # case where it's an ambiguous name
+                                singer_regex = r'\(singer\)'
+                                # search articles for band_regex
+                                if re.search(singer_regex, article_title):
+                                    article = self.chunk_wiki_content(article=article)
+                                    band_related_articles.append(article)
+                                    bands_file.write(f'{band}\n')
+                                else:
+                                    continue
                 print(colorama.Fore.RESET)
                 print('Finished Wiki Searching Bands...')
                 # close the file.
@@ -419,7 +431,7 @@ class MusicParserService():
                             article = self.chunk_wiki_content(article=article)
                             album_related_articles.append(article)
                             # add the band to the list
-                            albums_file.write(album)
+                            albums_file.write(f'{album}\n')
                         else:
                             # case where it's an ambiguous name
                             album_regex = r'\(album\)'
@@ -428,7 +440,7 @@ class MusicParserService():
                                 article = self.chunk_wiki_content(article=article)
                                 album_related_articles.append(article)
                                 # add the band to the list
-                                albums_file.write(album)
+                                albums_file.write(f'{album}\n')
                             else:
                                 continue
 
