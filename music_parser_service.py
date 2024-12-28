@@ -188,7 +188,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
 
-                        if article_title in band:
+                        if article_title.lower() in band.lower():
                             article = self.chunk_wiki_content(article=article)
                             band_related_articles.append(article)
                             bands_file.write(f'{band} \n')
@@ -211,7 +211,7 @@ class MusicParserService():
                                     bands_file.write(f'{band}\n')
                                 else:
                                     continue
-                               
+
                 print(colorama.Fore.RESET)
                 print('Finished Wiki Searching Bands...')
                 # close the file.
@@ -277,7 +277,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
 
-                        if article_title in band:
+                        if article_title.lower() in band.lower():
                             article = self.chunk_wiki_content(article=article)
                             band_related_articles.append(article)
                             bands_file.write(f'{band} \n')
@@ -349,7 +349,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
                         # search articles for band_regex
-                        if article_title in album:
+                        if article_title.lower() in album.lower():
                             article = self.chunk_wiki_content(article=article)
                             album_related_articles.append(article)
                             # add the band to the list
@@ -435,7 +435,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
                         # search articles for band_regex
-                        if article_title in album:
+                        if article_title.lower() in album.lower():
                             article = self.chunk_wiki_content(article=article)
                             album_related_articles.append(article)
                             # add the band to the list
