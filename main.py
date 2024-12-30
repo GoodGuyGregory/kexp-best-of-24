@@ -99,7 +99,7 @@ def main():
 
 
     pprint.pprint(
-        qa_with_source("Tell me about Khruangbin releases in 2024.")
+        qa_with_source("Tell me about Helado Negro releases in 2024.")
     )
 
 main()
