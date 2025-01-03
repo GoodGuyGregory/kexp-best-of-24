@@ -4,7 +4,6 @@ from langchain_community.document_loaders import WikipediaLoader
 import re
 import os
 import colorama
-from dotenv import load_dotenv
 from requests.exceptions import ConnectionError
 from requests.exceptions import ReadTimeout
 from file_empty import FileEmpty
@@ -172,14 +171,14 @@ class MusicParserService():
                             articles = WikipediaLoader(query=band, load_max_docs=3).load()
                         except ConnectionError as e:
                             if attempt < retries:
-                                print("ConnectionError: pulling back on request time")
+                                print("ConnectionError: pulling back on request time\n")
                                 time.sleep(back_off_throttle * (2 ** attempt))
                             else:
                                 # long nap.. :(
                                 # wait a random time between 100-600 seconds
                                 time.sleep(100 * random.randint(1,6))
                         except ReadTimeout as e:
-                            print("ReadTimeout occurred returning everything captured thus far.")
+                            print("ReadTimeout occurred returning everything captured thus far.\n")
                             # return everything captured thus far
                             self.wiki_timeout = True
                             bands_file.close()
@@ -189,7 +188,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
 
-                        if article_title in band:
+                        if article_title.lower() in band.lower():
                             article = self.chunk_wiki_content(article=article)
                             band_related_articles.append(article)
                             bands_file.write(f'{band} \n')
@@ -212,7 +211,7 @@ class MusicParserService():
                                     bands_file.write(f'{band}\n')
                                 else:
                                     continue
-                               
+
                 print(colorama.Fore.RESET)
                 print('Finished Wiki Searching Bands...')
                 # close the file.
@@ -262,14 +261,14 @@ class MusicParserService():
                             articles = WikipediaLoader(query=band, load_max_docs=3).load()
                         except ConnectionError as e:
                             if attempt < retries:
-                                print("ConnectionError: pulling back on request time")
+                                print("ConnectionError: pulling back on request time\n")
                                 time.sleep(back_off_throttle * (2 ** attempt))
                             else:
                                 # long nap.. :(
                                 # wait a random time between 100-600 seconds
                                 time.sleep(100 * random.randint(1,6))
                         except ReadTimeout as e:
-                            print("ReadTimeout occurred returning everything captured thus far.")
+                            print("ReadTimeout occurred returning everything captured thus far.\n")
                             # return everything captured thus far
                             bands_file.close()
                             return band_related_articles
@@ -278,7 +277,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
 
-                        if article_title in band:
+                        if article_title.lower() in band.lower():
                             article = self.chunk_wiki_content(article=article)
                             band_related_articles.append(article)
                             bands_file.write(f'{band} \n')
@@ -333,14 +332,14 @@ class MusicParserService():
                             articles = WikipediaLoader(query=album.strip(), load_max_docs=3).load()
                         except ConnectionError as e:
                             if attempt < retries:
-                                print(f"Connection error on attempt: {attempt + 1}: {e}")
+                                print(f"Connection error on attempt: {attempt + 1}: {e}\n")
                                 time.sleep(back_off_throttle * (2 ** attempt))
                             else:
                                 # long nap.. :(
                                 # wait a random time between 100-600 seconds
                                 time.sleep(100 * random.randint(1,6))
                         except ReadTimeout as e:
-                            print("ReadTimeout occurred returning everything captured thus far.")
+                            print("ReadTimeout occurred returning everything captured thus far.\n")
                             self.wiki_timeout = True
                             # return everything captured thus far
                             albums_file.close()
@@ -350,7 +349,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
                         # search articles for band_regex
-                        if article_title in album:
+                        if article_title.lower() in album.lower():
                             article = self.chunk_wiki_content(article=article)
                             album_related_articles.append(article)
                             # add the band to the list
@@ -436,7 +435,7 @@ class MusicParserService():
                     for article in articles:
                         article_title = article.metadata['title']
                         # search articles for band_regex
-                        if article_title in album:
+                        if article_title.lower() in album.lower():
                             article = self.chunk_wiki_content(article=article)
                             album_related_articles.append(article)
                             # add the band to the list
