@@ -213,7 +213,7 @@ class MusicParserService():
                                     continue
 
                 print(colorama.Fore.RESET)
-                print('Finished Wiki Searching Bands...')
+                # print('Finished Wiki Searching Bands...')
                 # close the file.
                 bands_file.close()
                 return band_related_articles
@@ -302,7 +302,7 @@ class MusicParserService():
                                     continue
                         
                 print(colorama.Fore.RESET)
-                print('Finished Wiki Searching Bands...')
+                # print('Finished Wiki Searching Bands...')
                 # close the file.
                 bands_file.close()
                 return band_related_articles
@@ -369,7 +369,7 @@ class MusicParserService():
                 albums_file.close()
 
                 print(colorama.Fore.RESET)
-                print('Finished Chunking ALbums...')
+                # print('Finished Chunking ALbums...')
                 return album_related_articles
         else:
             searched_albums = 0
@@ -457,7 +457,7 @@ class MusicParserService():
                                 continue
 
             print(colorama.Fore.RESET)
-            print('Finished Chunking ALbums...')
+            # print('Finished Chunking Albums...')
             return album_related_articles
 
 
